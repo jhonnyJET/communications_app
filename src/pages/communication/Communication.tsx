@@ -1,6 +1,7 @@
 import React, { FC, useState, useEffect } from 'react'
 import axios from 'axios'
 import { ServerUserNetwork } from '../../components/ServerUserNetwork/ServerUserNetwork'
+import { getHost } from '../../utils/server';
 
 interface Server {
   id: any;
@@ -25,7 +26,7 @@ export const Communication: FC<any> = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await axios.get('http://localhost:8088/ws-session/all');
+      const response = await axios.get(`${getHost()}/ws-session/all`);
       
       // Transform payload here before passing to ServerUserNetwork
       const serverData = response.data; 

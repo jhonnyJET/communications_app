@@ -9,7 +9,7 @@ WORKDIR /app
 
 RUN chown -R www:www /app
 RUN npm install
-RUN npm run build:prod # If you have a build step for your Node.js app
+RUN npm run build # If you have a build step for your Node.js app
 
 WORKDIR /etc/nginx
 COPY ./communications_app_image/nginx.conf /etc/nginx

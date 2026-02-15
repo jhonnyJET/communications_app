@@ -42,9 +42,35 @@ export const Communication: FC<any> = () => {
     fetchData();
   }, []);
     
+  const totalUsers = servers.reduce((sum, s) => sum + s.users.length, 0);
+  const maxCapacity = servers.length * 10;
+  const utilization = maxCapacity > 0 ? ((totalUsers / maxCapacity) * 100).toFixed(1) : '0.0';
+
   return (
     <div>
       <h1>Server-User Network</h1>
+      <div style={{
+        display: 'flex',
+        gap: '24px',
+        padding: '16px 24px',
+        marginBottom: '16px',
+        background: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        textAlign: 'center',
+      }}>
+        <div>
+          <span style={{ fontSize: '13px', color: '#666' }}>Total Users Connected</span>
+          <div style={{ fontSize: '24px', fontWeight: 700 }}>{totalUsers}</div>
+        </div>
+        <div style={{ borderLeft: '1px solid #eee', paddingLeft: '24px' }}>
+          <span style={{ fontSize: '13px', color: '#666' }}>Overall Max Connection Utilization</span>
+          <div style={{ fontSize: '24px', fontWeight: 700 }}>{utilization}%</div>
+          <span style={{ fontSize: '11px', color: '#999' }}>{totalUsers} / {maxCapacity} (servers: {servers.length})</span>
+        </div>
+      </div>
       <ServerUserNetwork servers={servers} />
     </div>
   )

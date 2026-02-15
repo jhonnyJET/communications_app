@@ -1,10 +1,11 @@
 // Conditional host variable based on NODE_ENV
 const getHost = (): string => {
   const nodeEnv = process.env.NODE_ENV || 'development';
+  const hostEnv = process.env.BE_HOST || 'localhost';
   
   switch (nodeEnv) {
     case 'production':
-      return process.env.REACT_APP_PRODUCTION_HOST || 'http://localhost:8000';
+      return `http://${hostEnv}:8000` || 'http://localhost:8000';
     case 'test':
       return process.env.REACT_APP_TEST_HOST || 'http://localhost:8000';
     case 'development':

@@ -1,7 +1,7 @@
 // Conditional host variable based on NODE_ENV
 const getHost = (): string => {
   const nodeEnv = process.env.NODE_ENV || 'development';
-  const hostEnv = process.env.REACT_APP_SERVER_URL || 'x:8000';
+  const hostEnv = process.env.REACT_APP_SERVER_URL;
 
   console.log(`Current NODE_ENV: ${JSON.stringify(process.env)}, using host: ${hostEnv}`);
   

@@ -7,12 +7,12 @@ const getHost = (): string => {
   
   switch (nodeEnv) {
     case 'production':
-      return `http://${hostEnv}` ;
+      return `http://${hostEnv}:8000` ;
     case 'test':
-      return `http://${hostEnv}` ;
+      return `http://${hostEnv}:8000` ;
     case 'development':
     default:
-      return `http://${hostEnv}`;
+      return `http://${hostEnv}:8000`;
   }
 };
 

@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 import { ServerUserNetwork } from '../../components/ServerUserNetwork/ServerUserNetwork'
 import { getHost } from '../../utils/server';
 
@@ -12,6 +13,16 @@ export const Communication: FC<any> = () => {
   const [servers, setServers] = useState<Server[]>([]);
   const [hostAddress, setHostAddress] = useState<string>(getHost());
   const [hostInput, setHostInput] = useState<string>(getHost());
+  const [selectedProtocol, setSelectedProtocol] = useState<string>('WEBSOCKET');
+
+  // Protocol to endpoint mapping
+  const protocolEndpoints: Record<string, string> = {
+    WEBSOCKET: '/ws-session/all',
+    SSE: '/sse-session/all',
+    MQTT: '/mqtt-session/all',
+    GRPC: '/grpc-session/all',
+    REST: '/rest-session/all'
+  };
 
   const getUsersByServerId = (hostId: string, data: any[]) => {
     console.log('Getting users for serverId:', hostId);
@@ -27,7 +38,8 @@ export const Communication: FC<any> = () => {
 
   const fetchData = useCallback(async (host: string) => {
     try {
-      const response = await axios.get(`${host}/ws-session/all`);
+      const endpoint = protocolEndpoints[selectedProtocol] || protocolEndpoints.WEBSOCKET;
+      const response = await axios.get(`${host}${endpoint}`);
 
       // Transform payload here before passing to ServerUserNetwork
       const serverData = response.data;
@@ -41,7 +53,7 @@ export const Communication: FC<any> = () => {
     } catch (error) {
       console.error('Failed to fetch data from host:', host, error);
     }
-  }, []);
+  }, [selectedProtocol]);
 
   useEffect(() => {
     fetchData(hostAddress);
@@ -75,6 +87,21 @@ export const Communication: FC<any> = () => {
         boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
         flexWrap: 'wrap',
       }}>
+        <FormControl size="small" style={{ minWidth: 120 }}>
+          <InputLabel style={{ fontSize: '13px', fontWeight: 600 }}>Protocol</InputLabel>
+          <Select
+            value={selectedProtocol}
+            label="Protocol"
+            onChange={(e) => setSelectedProtocol(e.target.value as string)}
+            style={{ fontSize: '14px' }}
+          >
+            <MenuItem value="WEBSOCKET">WebSocket</MenuItem>
+            <MenuItem value="SSE">SSE</MenuItem>
+            <MenuItem value="MQTT">MQTT</MenuItem>
+            <MenuItem value="GRPC">gRPC</MenuItem>
+            <MenuItem value="REST">REST</MenuItem>
+          </Select>
+        </FormControl>
         <label style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Host Address:</label>
         <input
           type="text"

@@ -2185,6 +2185,11 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
+"@types/google.maps@^3.54.10":
+  "integrity" "sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ=="
+  "resolved" "https://registry.npmjs.org/@types/google.maps/-/google.maps-3.58.1.tgz"
+  "version" "3.58.1"
+
 "@types/graceful-fs@^4.1.2":
   "integrity" "sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ=="
   "resolved" "https://registry.npmjs.org/@types/graceful-fs/-/graceful-fs-4.1.9.tgz"
@@ -2499,6 +2504,14 @@
   "integrity" "sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ=="
   "resolved" "https://registry.npmjs.org/@ungap/structured-clone/-/structured-clone-1.2.0.tgz"
   "version" "1.2.0"
+
+"@vis.gl/react-google-maps@^1.7.1":
+  "integrity" "sha512-F/GJzJyri7Jqf+bkLNxoi2RcH2hCIo1I3//PyiILqQzdzglMoqZVO1DLXlHPifNdebk1/zib6dMJA3i73nwmuQ=="
+  "resolved" "https://registry.npmjs.org/@vis.gl/react-google-maps/-/react-google-maps-1.7.1.tgz"
+  "version" "1.7.1"
+  dependencies:
+    "@types/google.maps" "^3.54.10"
+    "fast-deep-equal" "^3.1.3"
 
 "@webassemblyjs/ast@^1.12.1", "@webassemblyjs/ast@1.12.1":
   "integrity" "sha512-EKfMUOPRRUTy5UII4qJDGPpqfwjOmZ5jeGFwid9mnoqIFK+e0vqoi1qH56JpmZSzEL53jKnNzScdmftJyG5xWg=="
@@ -8174,7 +8187,7 @@
     "strip-ansi" "^6.0.1"
     "text-table" "^0.2.0"
 
-"react-dom@^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom@^18.0.0", "react-dom@^18.3.1", "react-dom@>=16.6.0":
+"react-dom@^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom@^18.0.0", "react-dom@^18.3.1", "react-dom@>=16.6.0", "react-dom@>=16.8.0 || ^19.0 || ^19.0.0-rc":
   "integrity" "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw=="
   "resolved" "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz"
   "version" "18.3.1"
@@ -8282,7 +8295,7 @@
     "loose-envify" "^1.4.0"
     "prop-types" "^15.6.2"
 
-"react@^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18.0.0", "react@^18.3.1", "react@>= 16", "react@>=16.6.0", "react@>=16.8.0":
+"react@^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18.0.0", "react@^18.3.1", "react@>= 16", "react@>=16.6.0", "react@>=16.8.0", "react@>=16.8.0 || ^19.0 || ^19.0.0-rc":
   "integrity" "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ=="
   "resolved" "https://registry.npmjs.org/react/-/react-18.3.1.tgz"
   "version" "18.3.1"

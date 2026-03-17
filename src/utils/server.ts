@@ -56,6 +56,7 @@ const getTrackerClientHost = (): string => {
 export const HOST = getHost();
 export const TRACKER_HOST = getTrackerHost();
 export const TRACKER_CLIENT_HOST = getTrackerClientHost();
+export const MQTT_WS_URL = process.env.REACT_APP_MQTT_WS_URL ?? 'ws://localhost:9001/mqtt';
 
 // Optional: Export the function if you need to call it dynamically
 export { getHost, getTrackerHost, getTrackerClientHost };

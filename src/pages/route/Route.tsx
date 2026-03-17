@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
 import {
+  Alert,
   Autocomplete as MuiAutocomplete,
   Box,
   Button,
+  Card,
+  CardContent,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -16,10 +19,11 @@ import {
   Typography,
 } from '@mui/material';
 import axios from 'axios';
-import { getHost, getTrackerClientHost } from '../../utils/server';
+import { getTrackerHost, MQTT_WS_URL } from '../../utils/server';
+import { useSimulationMqtt } from '../../hooks/useSimulationMqtt';
 
 const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY ?? '';
-const SUBMIT_URL = `${getTrackerClientHost()}/route/kickstart`;
+const SIMULATION_REQUEST_URL = `${getTrackerHost()}/simulations/request`;
 
 const PROTOCOLS = ['WEBSOCKET', 'SSE', 'MQTT', 'GRPC', 'REST'] as const;
 type Protocol = typeof PROTOCOLS[number];
@@ -211,6 +215,44 @@ function StepProtocols({
   );
 }
 
+// ── Queue status ───────────────────────────────────────────────────────────────
+
+interface QueueResponse {
+  simulationId: string;
+  position: number;
+  estimatedWaitTime: string;
+}
+
+function QueueStatus({
+  queue,
+  simulationReady,
+}: {
+  queue: QueueResponse;
+  simulationReady: boolean;
+}) {
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {simulationReady ? (
+          <Alert severity="success">
+            Your simulation is starting! Simulation ID: <strong>{queue.simulationId}</strong>
+          </Alert>
+        ) : (
+          <>
+            <Alert severity="info">
+              You are in the queue. Position: <strong>{queue.position}</strong> — Estimated wait:{' '}
+              <strong>{queue.estimatedWaitTime}</strong>
+            </Alert>
+            <Typography variant="caption" color="text.secondary">
+              Simulation ID: {queue.simulationId} — Waiting for MQTT notification…
+            </Typography>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const INITIAL_FORM: FormState = {
@@ -228,32 +270,49 @@ function RouteContent() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [queueResponse, setQueueResponse] = useState<QueueResponse | null>(null);
+  const [clientId, setClientId] = useState<string | null>(null);
+
+  const mqttNotification = useSimulationMqtt(clientId, MQTT_WS_URL);
+  const simulationReady = mqttNotification?.message?.toLowerCase().includes('turn') ?? false;
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setQueueResponse(null);
+
+    const newClientId = crypto.randomUUID();
+    setClientId(newClientId);
+
     try {
       const userIds = Array.from({ length: form.numberOfUsers }, (_, i) => `user${i + 1}`);
       const selectedProtocols = PROTOCOLS.filter((p) => form.protocols[p]);
 
-      await Promise.all(
-        selectedProtocols.map((commType) =>
-          axios.post(SUBMIT_URL, {
-            startAddress: form.startPlace?.formattedAddress ?? '',
-            destination: form.destPlace?.formattedAddress ?? '',
-            commType,
-            userIds,
-            serverUpdateRatio: String(form.serverUpdateRatio),
-            clientUpdateRatio: String(form.clientUpdateRatio),
-            exchangeRatePerMin: String(form.exchangeRatePerMin),
-          }),
-        ),
-      );
+      const { data } = await axios.post<QueueResponse>(SIMULATION_REQUEST_URL, {
+        clientId: newClientId,
+        protocols: selectedProtocols,
+        startAddress: form.startPlace?.formattedAddress ?? '',
+        destination: form.destPlace?.formattedAddress ?? '',
+        userIds,
+        serverUpdateRatio: form.serverUpdateRatio,
+        clientUpdateRatio: form.clientUpdateRatio,
+        exchangeRatePerMin: form.exchangeRatePerMin,
+      });
+
+      setQueueResponse(data);
     } catch (err: any) {
       setSubmitError(err?.message ?? 'Request failed');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleReset = () => {
+    setForm(INITIAL_FORM);
+    setActiveStep(0);
+    setQueueResponse(null);
+    setClientId(null);
+    setSubmitError(null);
   };
 
   const isLastStep = activeStep === STEPS.length - 1;
@@ -262,45 +321,54 @@ function RouteContent() {
     <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 640 }}>
       <Typography variant="h6">Route</Typography>
 
-      <Stepper activeStep={activeStep}>
-        {STEPS.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+      {queueResponse ? (
+        <>
+          <QueueStatus queue={queueResponse} simulationReady={simulationReady} />
+          <Button onClick={handleReset}>New Simulation</Button>
+        </>
+      ) : (
+        <>
+          <Stepper activeStep={activeStep}>
+            {STEPS.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
 
-      <Box>
-        {activeStep === 0 && <StepAddresses setForm={setForm} />}
-        {activeStep === 1 && <StepConfiguration form={form} setForm={setForm} />}
-        {activeStep === 2 && <StepProtocols form={form} setForm={setForm} />}
-      </Box>
+          <Box>
+            {activeStep === 0 && <StepAddresses setForm={setForm} />}
+            {activeStep === 1 && <StepConfiguration form={form} setForm={setForm} />}
+            {activeStep === 2 && <StepProtocols form={form} setForm={setForm} />}
+          </Box>
 
-      {submitError && (
-        <Typography color="error" variant="body2">{submitError}</Typography>
+          {submitError && (
+            <Alert severity="error">{submitError}</Alert>
+          )}
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button
+              disabled={activeStep === 0}
+              onClick={() => setActiveStep((s) => s - 1)}
+            >
+              Back
+            </Button>
+            {isLastStep ? (
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting…' : 'Request Simulation'}
+              </Button>
+            ) : (
+              <Button variant="contained" onClick={() => setActiveStep((s) => s + 1)}>
+                Next
+              </Button>
+            )}
+          </Box>
+        </>
       )}
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button
-          disabled={activeStep === 0}
-          onClick={() => setActiveStep((s) => s - 1)}
-        >
-          Back
-        </Button>
-        {isLastStep ? (
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? 'Submitting…' : 'Submit'}
-          </Button>
-        ) : (
-          <Button variant="contained" onClick={() => setActiveStep((s) => s + 1)}>
-            Next
-          </Button>
-        )}
-      </Box>
     </Box>
   );
 }

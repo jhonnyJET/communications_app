@@ -128,6 +128,9 @@ interface FormState {
   exchangeRatePerMin: number;
   numberOfUsers: number;
   protocols: Record<Protocol, boolean>;
+  isStreaming: boolean;
+  numberOfClientDataPoints: number;
+  numberOfServerDataPoints: number;
 }
 
 function StepAddresses({
@@ -156,29 +159,79 @@ function StepConfiguration({
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
 }) {
+  const handleStreamingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isStreaming = e.target.checked;
+    setForm((f) => ({
+      ...f,
+      isStreaming,
+      ...(isStreaming
+        ? { serverUpdateRatio: 0, clientUpdateRatio: 0, exchangeRatePerMin: 0 }
+        : { numberOfClientDataPoints: 0, numberOfServerDataPoints: 0 }),
+    }));
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <CounterField
-          label="ServerUpdateRatio"
-          value={form.serverUpdateRatio}
-          max={100}
-          onChange={(v) => setForm((f) => ({ ...f, serverUpdateRatio: v }))}
-        />
-        <Typography sx={{ flexShrink: 0 }}>:</Typography>
-        <CounterField
-          label="ClientUpdateRatio"
-          value={form.clientUpdateRatio}
-          max={100}
-          onChange={(v) => setForm((f) => ({ ...f, clientUpdateRatio: v }))}
-        />
-      </Box>
-      <CounterField
-        label="ExchangeRatePerMin"
-        value={form.exchangeRatePerMin}
-        max={600}
-        onChange={(v) => setForm((f) => ({ ...f, exchangeRatePerMin: v }))}
+      <FormControlLabel
+        control={<Checkbox checked={form.isStreaming} onChange={handleStreamingChange} />}
+        label="Streaming"
       />
+
+      {!form.isStreaming && (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CounterField
+              label="ServerUpdateRatio"
+              value={form.serverUpdateRatio}
+              max={100}
+              onChange={(v) => setForm((f) => ({ ...f, serverUpdateRatio: v }))}
+            />
+            <Typography sx={{ flexShrink: 0 }}>:</Typography>
+            <CounterField
+              label="ClientUpdateRatio"
+              value={form.clientUpdateRatio}
+              max={100}
+              onChange={(v) => setForm((f) => ({ ...f, clientUpdateRatio: v }))}
+            />
+          </Box>
+          <CounterField
+            label="ExchangeRatePerMin"
+            value={form.exchangeRatePerMin}
+            max={600}
+            onChange={(v) => setForm((f) => ({ ...f, exchangeRatePerMin: v }))}
+          />
+          <CounterField
+            label="NumberOfClientDataPoints"
+            value={form.numberOfClientDataPoints}
+            max={2000}
+            onChange={(v) => setForm((f) => ({ ...f, numberOfClientDataPoints: v }))}
+          />
+          <CounterField
+            label="NumberOfServerDataPoints"
+            value={form.numberOfServerDataPoints}
+            max={2000}
+            onChange={(v) => setForm((f) => ({ ...f, numberOfServerDataPoints: v }))}
+          />
+        </>
+      )}
+
+      {form.isStreaming && (
+        <>
+          <CounterField
+            label="NumberOfClientDataPoints"
+            value={form.numberOfClientDataPoints}
+            max={2000}
+            onChange={(v) => setForm((f) => ({ ...f, numberOfClientDataPoints: v }))}
+          />
+          <CounterField
+            label="NumberOfServerDataPoints"
+            value={form.numberOfServerDataPoints}
+            max={2000}
+            onChange={(v) => setForm((f) => ({ ...f, numberOfServerDataPoints: v }))}
+          />
+        </>
+      )}
+
       <CounterField
         label="Number of Users"
         value={form.numberOfUsers}
@@ -263,6 +316,9 @@ const INITIAL_FORM: FormState = {
   exchangeRatePerMin: 0,
   numberOfUsers: 0,
   protocols: { WEBSOCKET: false, SSE: false, MQTT: false, GRPC: false, REST: false },
+  isStreaming: false,
+  numberOfClientDataPoints: 0,
+  numberOfServerDataPoints: 0,
 };
 
 function RouteContent() {
@@ -297,6 +353,9 @@ function RouteContent() {
         serverUpdateRatio: form.serverUpdateRatio,
         clientUpdateRatio: form.clientUpdateRatio,
         exchangeRatePerMin: form.exchangeRatePerMin,
+        isStreaming: form.isStreaming,
+        numberOfClientDataPoints: form.numberOfClientDataPoints,
+        numberOfServerDataPoints: form.numberOfServerDataPoints,
       });
 
       setQueueResponse(data);

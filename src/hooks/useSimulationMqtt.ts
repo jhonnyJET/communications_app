@@ -1,9 +1,17 @@
 import mqtt from 'mqtt';
 import { useEffect, useRef, useState } from 'react';
 
+export interface ProtocolStatus {
+  position: number;
+  protocol: string;
+  status: 'completed' | 'ongoing' | 'pending';
+}
+
 export interface SimulationNotification {
   simulationId: string;
-  message: string;
+  status: string;
+  progress: number;
+  protocolStatuses: ProtocolStatus[];
 }
 
 export function useSimulationMqtt(clientId: string | null, brokerUrl: string) {
@@ -11,7 +19,10 @@ export function useSimulationMqtt(clientId: string | null, brokerUrl: string) {
   const clientRef = useRef<mqtt.MqttClient | null>(null);
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId) {
+      setNotification(null);
+      return;
+    }
 
     const topic = `simulation/${clientId}/updates`;
     const client = mqtt.connect(brokerUrl);

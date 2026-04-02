@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { APIProvider, useMapsLibrary, Map, useMap } from '@vis.gl/react-google-maps';
 import {
   Alert,
   Autocomplete as MuiAutocomplete,
@@ -325,6 +325,35 @@ function SimulationProgressDisplay({ notification }: { notification: SimulationN
   );
 }
 
+function Path({ points }: { points: google.maps.LatLngLiteral[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || points.length === 0) return;
+
+    const polyline = new google.maps.Polyline({
+      path: points,
+      geodesic: true,
+      strokeColor: '#FF0000',
+      strokeOpacity: 1.0,
+      strokeWeight: 4,
+    });
+
+    polyline.setMap(map);
+
+    // Fit map bounds to path
+    const bounds = new google.maps.LatLngBounds();
+    points.forEach((p) => bounds.extend(p));
+    map.fitBounds(bounds);
+
+    return () => {
+      polyline.setMap(null);
+    };
+  }, [map, points]);
+
+  return null;
+}
+
 function SimulationDetailsModal({
   open,
   onClose,
@@ -340,6 +369,7 @@ function SimulationDetailsModal({
 }) {
   const [selectedProtocol, setSelectedProtocol] = useState(protocols[0] ?? '');
   const [selectedUser, setSelectedUser] = useState(users[0] ?? '');
+  const [locations, setLocations] = useState<google.maps.LatLngLiteral[]>([]);
 
   useEffect(() => {
     if (open && simulationId && selectedProtocol && selectedUser) {
@@ -349,52 +379,70 @@ function SimulationDetailsModal({
         .get(url)
         .then((res) => {
           console.log('Simulation Details Response:', res.data);
+          const points = res.data.locations || [];
+          setLocations(points);
         })
         .catch((err) => {
           console.error('Error fetching simulation details:', err);
+          setLocations([]);
         });
+    } else if (!open) {
+      setLocations([]);
     }
   }, [open, simulationId, selectedProtocol, selectedUser]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Simulation Details</DialogTitle>
       <DialogContent sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <FormControl fullWidth>
-          <InputLabel id="protocol-select-label">Protocol</InputLabel>
-          <Select
-            labelId="protocol-select-label"
-            value={selectedProtocol}
-            label="Protocol"
-            onChange={(e: SelectChangeEvent) => setSelectedProtocol(e.target.value)}
-          >
-            {protocols.map((p) => (
-              <MenuItem key={p} value={p}>
-                {p}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormControl fullWidth>
+            <InputLabel id="protocol-select-label">Protocol</InputLabel>
+            <Select
+              labelId="protocol-select-label"
+              value={selectedProtocol}
+              label="Protocol"
+              onChange={(e: SelectChangeEvent) => setSelectedProtocol(e.target.value)}
+            >
+              {protocols.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {p}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-        <FormControl fullWidth>
-          <InputLabel id="user-select-label">User</InputLabel>
-          <Select
-            labelId="user-select-label"
-            value={selectedUser}
-            label="User"
-            onChange={(e: SelectChangeEvent) => setSelectedUser(e.target.value)}
-          >
-            {users.map((u) => (
-              <MenuItem key={u} value={u}>
-                {u}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <FormControl fullWidth>
+            <InputLabel id="user-select-label">User</InputLabel>
+            <Select
+              labelId="user-select-label"
+              value={selectedUser}
+              label="User"
+              onChange={(e: SelectChangeEvent) => setSelectedUser(e.target.value)}
+            >
+              {users.map((u) => (
+                <MenuItem key={u} value={u}>
+                  {u}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
         
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ width: '100%', height: 400, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd' }}>
+          <Map
+            defaultCenter={{ lat: 0, lng: 0 }}
+            defaultZoom={2}
+            gestureHandling={'greedy'}
+            disableDefaultUI={false}
+          >
+            <Path points={locations} />
+          </Map>
+        </Box>
+
+        <Box>
           <Typography variant="caption" color="text.secondary">
-            Results are currently logged to the console.
+            Displaying {locations.length} data points on the map.
           </Typography>
         </Box>
       </DialogContent>

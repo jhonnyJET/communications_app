@@ -1,4 +1,8 @@
 import React, { FC, useState } from 'react';
+import axios from 'axios';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
+import { IconButton, Tooltip } from '@mui/material';
+import { getWsClientHost } from '../../utils/server';
 import './ServerUserNetwork.css';
 
 interface User {
@@ -14,6 +18,7 @@ interface Server {
 
 interface ServerUserNetworkProps {
   servers?: Server[];
+  wsAppHost?: string;
 }
 
 const defaultServers: Server[] = [
@@ -40,8 +45,9 @@ const defaultServers: Server[] = [
   }
 ];
 
-export const ServerUserNetwork: FC<ServerUserNetworkProps> = ({ servers = defaultServers }) => {
+export const ServerUserNetwork: FC<ServerUserNetworkProps> = ({ servers = defaultServers, wsAppHost }) => {
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
+  const [disconnectingUser, setDisconnectingUser] = useState<string | null>(null);
 
   const handleServerClick = (server: Server) => {
     setSelectedServer(server);
@@ -49,6 +55,18 @@ export const ServerUserNetwork: FC<ServerUserNetworkProps> = ({ servers = defaul
 
   const handleCloseModal = () => {
     setSelectedServer(null);
+  };
+
+  const handleDisconnect = async (userId: string) => {
+    setDisconnectingUser(userId);
+    try {
+      const host = wsAppHost ?? getWsClientHost();
+      await axios.post(`${host}/route/kickstart/ws/batch/disconnect`, { userIds: [userId] });
+    } catch (error) {
+      console.error('Disconnect failed for user:', userId, error);
+    } finally {
+      setDisconnectingUser(null);
+    }
   };
 
   return (
@@ -85,6 +103,18 @@ export const ServerUserNetwork: FC<ServerUserNetworkProps> = ({ servers = defaul
                     <span className={`status-dot ${user.isOnline ? 'online' : 'offline'}`} />
                     <span className="user-list-name">{user.name}</span>
                     <span className="user-list-seen">Last seen: {user.lastSeen}</span>
+                    <Tooltip title="Disconnect user">
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDisconnect(user.name)}
+                          disabled={disconnectingUser === user.name}
+                          style={{ color: '#e53935', marginLeft: '8px' }}
+                        >
+                          <LinkOffIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </li>
                 ))}
               </ul>

@@ -31,7 +31,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import axios from 'axios';
-import { getTrackerHost, getTrackerServerGoHost, MQTT_WS_URL } from '../../utils/server';
+import { getTrackerHost, getTrackerServerGoHost, MQTT_WS_URL, getTrackerAnalyticsHost } from '../../utils/server';
 import { useSimulationMqtt, SimulationNotification } from '../../hooks/useSimulationMqtt';
 
 const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY ?? '';
@@ -373,7 +373,7 @@ function SimulationDetailsModal({
 
   useEffect(() => {
     if (open && simulationId && selectedProtocol && selectedUser) {
-      const url = `http://localhost:5050/simulation/${simulationId}/protocol/${selectedProtocol}/user/${selectedUser}`;
+      const url = `${getTrackerAnalyticsHost()}/simulation/${simulationId}/protocol/${selectedProtocol}/user/${selectedUser}`;
       console.log(`Fetching simulation details: ${url}`);
       axios
         .get(url)
@@ -520,7 +520,7 @@ function generateClientId() {
     return crypto.randomUUID();
   }
   // Fallback for environments where crypto.randomUUID is not available (e.g., non-HTTPS)
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);

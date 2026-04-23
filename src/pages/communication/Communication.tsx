@@ -1,8 +1,9 @@
 import React, { FC, useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import { Select, MenuItem, FormControl, InputLabel } from '@mui/material'
+import { Select, MenuItem, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Button } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import { ServerUserNetwork } from '../../components/ServerUserNetwork/ServerUserNetwork'
-import { getHost } from '../../utils/server';
+import { getWsClientHost, getWsServerHost } from '../../utils/server';
 
 interface Server {
   id: any;
@@ -11,8 +12,8 @@ interface Server {
 
 export const Communication: FC<any> = () => {
   const [servers, setServers] = useState<Server[]>([]);
-  const [hostAddress, setHostAddress] = useState<string>(getHost());
-  const [hostInput, setHostInput] = useState<string>(getHost());
+  const [hostAddress, setHostAddress] = useState<string>(getWsServerHost());
+  const [hostInput, setHostInput] = useState<string>(getWsServerHost());
   const [selectedProtocol, setSelectedProtocol] = useState<string>('WEBSOCKET');
 
   // Protocol to endpoint mapping
@@ -69,6 +70,23 @@ export const Communication: FC<any> = () => {
     }
   };
 
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [numUsers, setNumUsers] = useState(1);
+  const [connectLoading, setConnectLoading] = useState(false);
+
+  const handleBatchConnect = async () => {
+    setConnectLoading(true);
+    try {
+      const userIds = Array.from({ length: numUsers }, (_, i) => `user${i + 1}`);
+      await axios.post(`${getWsClientHost()}/route/kickstart/ws/batch/connect`, { userIds });
+    } catch (error) {
+      console.error('Batch connect failed:', error);
+    } finally {
+      setConnectLoading(false);
+      setBatchModalOpen(false);
+    }
+  };
+
   const totalUsers = servers.reduce((sum, s) => sum + s.users.length, 0);
   const maxCapacity = servers.length * 10;
   const utilization = maxCapacity > 0 ? ((totalUsers / maxCapacity) * 100).toFixed(1) : '0.0';
@@ -96,10 +114,6 @@ export const Communication: FC<any> = () => {
             style={{ fontSize: '14px' }}
           >
             <MenuItem value="WEBSOCKET">WebSocket</MenuItem>
-            <MenuItem value="SSE">SSE</MenuItem>
-            <MenuItem value="MQTT">MQTT</MenuItem>
-            <MenuItem value="GRPC">gRPC</MenuItem>
-            <MenuItem value="REST">REST</MenuItem>
           </Select>
         </FormControl>
         <label style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Host Address:</label>
@@ -134,7 +148,80 @@ export const Communication: FC<any> = () => {
         >
           Apply
         </button>
+        <button
+          onClick={() => setBatchModalOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#fff',
+            background: '#43a047',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          <AddIcon style={{ fontSize: '18px' }} />
+          Users
+        </button>
       </div>
+
+      <Dialog open={batchModalOpen} onClose={() => setBatchModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Connect Users</DialogTitle>
+        <DialogContent>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Number of Users</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IconButton
+                size="small"
+                onClick={() => setNumUsers(n => Math.max(1, n - 1))}
+                style={{ border: '1px solid #ccc', borderRadius: '6px' }}
+              >
+                <span style={{ fontSize: '18px', lineHeight: 1, paddingBottom: '2px' }}>−</span>
+              </IconButton>
+              <input
+                type="number"
+                value={numUsers}
+                min={1}
+                onChange={(e) => setNumUsers(Math.max(1, parseInt(e.target.value) || 1))}
+                style={{
+                  width: '70px',
+                  textAlign: 'center',
+                  padding: '6px 8px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  outline: 'none',
+                }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => setNumUsers(n => n + 1)}
+                style={{ border: '1px solid #ccc', borderRadius: '6px' }}
+              >
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions style={{ padding: '12px 24px' }}>
+          <Button onClick={() => setBatchModalOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleBatchConnect}
+            variant="contained"
+            disabled={connectLoading}
+            style={{ background: '#43a047' }}
+          >
+            {connectLoading ? 'Connecting…' : 'Connect'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <div style={{
         display: 'flex',
         gap: '24px',

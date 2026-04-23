@@ -17,6 +17,42 @@ const getHost = (): string => {
   }
 };
 
+const getWsClientHost = (): string => {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const hostEnv = process.env.REACT_APP_WS_CLIENT_HOST;
+  const portEnv = process.env.REACT_APP_WS_CLIENT_PORT;
+
+  console.log(`Current NODE_ENV: ${JSON.stringify(process.env)}, using host: ${hostEnv}`);
+
+  switch (nodeEnv) {
+    case 'production':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'test':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'development':
+    default:
+      return `http://${hostEnv}:${portEnv}`;
+  }
+};
+
+const getWsServerHost = (): string => {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const hostEnv = process.env.REACT_APP_WS_SERVER_HOST;
+  const portEnv = process.env.REACT_APP_WS_SERVER_PORT;
+
+  console.log(`Current NODE_ENV: ${JSON.stringify(process.env)}, using host: ${hostEnv}`);
+
+  switch (nodeEnv) {
+    case 'production':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'test':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'development':
+    default:
+      return `http://${hostEnv}:${portEnv}`;
+  }
+};
+
 const getTrackerHost = (): string => {
   const nodeEnv = process.env.NODE_ENV || 'development';
   const hostEnv = process.env.REACT_APP_SERVER_URL;
@@ -89,15 +125,43 @@ const getTrackerClientGoHost = (): string => {
   }
 };
 
+const getTrackerAnalyticsHost = (): string => {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const hostEnv = process.env.REACT_APP_SERVER_URL;
+  const portEnv = process.env.REACT_APP_TRACKER_ANALYTICS_PORT;
+
+  console.log(`Current NODE_ENV: ${JSON.stringify(process.env)}, using host: ${hostEnv}`);
+
+  switch (nodeEnv) {
+    case 'production':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'test':
+      return `http://${hostEnv}:${portEnv}`;
+    case 'development':
+    default:
+      return `http://${hostEnv}:${portEnv}`;
+  }
+};
+
 export const HOST = getHost();
+export const WS_SERVER_HOST = getWsServerHost();
+export const WS_CLIENT_HOST = getWsClientHost();
 export const TRACKER_HOST = getTrackerHost();
 export const TRACKER_CLIENT_HOST = getTrackerClientHost();
 export const TRACKER_SERVER_GO_HOST = getTrackerServerGoHost();
 export const TRACKER_CLIENT_GO_HOST = getTrackerClientGoHost();
+export const TRACKER_ANALYTICS_HOST = getTrackerAnalyticsHost()
 export const MQTT_WS_URL = process.env.REACT_APP_MQTT_WS_URL ?? 'ws://localhost:9001/mqtt';
 
 // Optional: Export the function if you need to call it dynamically
-export { getHost, getTrackerHost, getTrackerClientHost, getTrackerServerGoHost, getTrackerClientGoHost };
+export { getHost, 
+  getTrackerHost, 
+  getTrackerClientHost, 
+  getTrackerServerGoHost, 
+  getTrackerClientGoHost, 
+  getTrackerAnalyticsHost,
+  getWsServerHost,
+  getWsClientHost };
 
 // Optional: You can also export specific environment checks
 export const isDevelopment = process.env.NODE_ENV === 'development';
